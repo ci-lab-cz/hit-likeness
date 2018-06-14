@@ -213,10 +213,10 @@ def predict_oob(forest, x):
     return pd.concat(pred, axis=1).mean(axis=1)
 
 
-def create_tree(x, y, ref_hit_rate, nvar, min_parent_num, min_child_num, algorithm, verbose):
+def create_tree(x, y, ref_hit_rate, nvar, nsamples, min_parent_num, min_child_num, algorithm, verbose):
     tree = nx.DiGraph()
     np.random.seed()
-    case_ids = np.random.choice(a=[False, True], size=x.shape[0], p=[1 / 3, 2 / 3])
+    case_ids = np.random.choice(a=[False, True], size=x.shape[0], p=[1 - nsamples, nsamples])
     tree.add_node(-1, mol_names=x.index[case_ids])
     grow_tree(x=x.iloc[case_ids, :],
               y=y.iloc[case_ids, :],
@@ -236,16 +236,16 @@ def create_tree_mp(args):
     return create_tree(*args)
 
 
-def grow_forest(x, y, ntree, nvar, min_parent_num, min_child_num, pool, algorithm, verbose):
+def grow_forest(x, y, ntree, nvar, nsamples, min_parent_num, min_child_num, pool, algorithm, verbose):
 
     ref_hit_rate = np.apply_along_axis(hit_rate, 0, y)
     forest = []
     if pool:
-        for tree in pool.imap_unordered(create_tree_mp, ((x, y, ref_hit_rate, nvar, min_parent_num, min_child_num, algorithm, verbose) for _ in range(ntree))):
+        for tree in pool.imap_unordered(create_tree_mp, ((x, y, ref_hit_rate, nvar, nsamples, min_parent_num, min_child_num, algorithm, verbose) for _ in range(ntree))):
             forest.append(tree)
     else:
         for _ in range(ntree):
-            forest.append(create_tree(x, y, ref_hit_rate, nvar, min_parent_num, min_child_num, algorithm, verbose))
+            forest.append(create_tree(x, y, ref_hit_rate, nvar, nsamples, min_parent_num, min_child_num, algorithm, verbose))
     return forest
 
 
@@ -264,7 +264,11 @@ if __name__ == '__main__':
     parser.add_argument('-t', '--ntree', metavar='INTEGER', required=False, default=50,
                         help='number of trees to build. Default: 50.')
     parser.add_argument('-m', '--nvar', metavar='INTEGER', required=False, default=3,
-                        help='number of randomly chosen variables used to split nodes. Default: 3.')
+                        help='number of randomly chosen variables used to split nodes. '
+                             'Values 0 and less indicate to use all variables. Default: 3.')
+    parser.add_argument('-s', '--nsamples', metavar='INTEGER', required=False, default=0.67,
+                        help='portion of randomly chosen compounds to train each tree. Should be greater than 0 and '
+                             'less or equal to 1. Default: 0.67.')
     parser.add_argument('-p', '--min_parent', metavar='INTEGER', required=False, default=10000,
                         help='minimum number of items in parent node to split. Default: 10000.')
     parser.add_argument('-n', '--min_child', metavar='INTEGER', required=False, default=100,
@@ -282,12 +286,17 @@ if __name__ == '__main__':
         if o == "y": y_fname = v
         if o == "ntree": ntree = int(v)
         if o == "nvar": nvar = int(v)
+        if o == "nsamples": nsamples = float(v)
         if o == "min_child": min_child_num = int(v)
         if o == "min_parent": min_parent_num = int(v)
         if o == "output": out_fname = v
         if o == "algorithm": algorithm = int(v)
         if o == "verbose": verbose = v
         if o == "ncpu": ncpu = min(int(v), cpu_count())
+
+    if nsamples <= 0 or nsamples > 1:
+        print('nsamples argument should be within (0, 1] range')
+        exit()
 
     if ncpu == 1:
         pool = None
@@ -301,9 +310,13 @@ if __name__ == '__main__':
     #
     # pred = predict_forest(trees, x)
 
+    if nvar <= 0:
+        nvar = x.shape[1]
+
     forest = grow_forest(x=x,
                          y=y,
                          nvar=nvar,
+                         nsamples=nsamples,
                          ntree=ntree,
                          min_parent_num=min_parent_num,
                          min_child_num=min_child_num,
