@@ -82,8 +82,11 @@ if __name__ == '__main__':
                         help='file with pickled model.')
     parser.add_argument('-p', '--prediction', metavar='predictions.txt', required=False, default=None,
                         help='text file with predicted values. Default: None.')
-    parser.add_argument('-s', '--stat', metavar='stat.txt', required=False, default=None,
+    parser.add_argument('-s', '--overall_stat', metavar='overall_stat.txt', required=False, default=None,
                         help='text file with calculated statistics. A file with observed values should '
+                             'be supplied to calculate statistics. Default: None.')
+    parser.add_argument('-j', '--assay_stat', metavar='assay_stat.txt', required=False, default=None,
+                        help='text file with calculated statistics for each assay. A file with observed values should '
                              'be supplied to calculate statistics. Default: None.')
     parser.add_argument('-d', '--detailed', action='store_true', default=False,
                         help='calculate statistics after addition of each tree and '
@@ -97,7 +100,8 @@ if __name__ == '__main__':
         if o == "y": y_fname = v
         if o == "model": model_fname = v
         if o == "prediction": pred_fname = v
-        if o == "stat": stat_fname = v
+        if o == "overall_stat": overall_stat_fname = v
+        if o == "assay_stat": assay_stat_fname = v
         if o == "detailed": detailed = v
         if o == "verbose": verbose = v
 
@@ -133,9 +137,15 @@ if __name__ == '__main__':
         else:
             pred.iloc[:, -1].round(3).to_csv(pred_fname, sep='\t')
 
-    if stat_fname:
-        f = open(stat_fname, 'wt')
-        f.write('tree\tcompounds\tcoverage\tmedian enrichment\tmean enrichment\n')
+    if overall_stat_fname:
+        f_overall = open(overall_stat_fname, 'wt')
+        f_overall.write('tree\tcompounds\tcoverage\tmedian enrichment\tmean enrichment\n')
+
+    if assay_stat_fname:
+        f_assay = open(assay_stat_fname, 'wt')
+        f_assay.write('tree\t' + '\t'.join(y.columns) + '\n')
+
+    if overall_stat_fname or assay_stat_fname:
 
         r = range(pred.shape[1])   # iterate over all trees
         if not detailed:
@@ -145,6 +155,10 @@ if __name__ == '__main__':
             ids = pred.iloc[:, j] >= 1
             e_median = enrichment(y.loc[ids, :], ref_hit_rate, np.median)
             e_mean = enrichment(y.loc[ids, :], ref_hit_rate, np.mean)
-            f.write('\t'.join(map(str, (j + 1, sum(ids), round(sum(ids) / y.shape[0], 3), round(e_median, 3), round(e_mean, 3)))) + '\n')
-            if verbose:
-                print(j + 1, sum(ids), round(sum(ids) / y.shape[0], 3), round(e_median, 3), round(e_mean, 3))
+            f_overall.write('\t'.join(map(str, (j + 1, sum(ids), round(sum(ids) / y.shape[0], 3), round(e_median, 3), round(e_mean, 3)))) + '\n')
+
+            e_assay = np.apply_along_axis(hit_rate, 0, y.loc[ids, :]) / ref_hit_rate
+            f_assay.write(str(j + 1) + '\t' + '\t'.join(map(str, np.round(e_assay, 3))) + '\n')
+
+            # if verbose:
+            #     print(j + 1, sum(ids), round(sum(ids) / y.shape[0], 3), round(e_median, 3), round(e_mean, 3))
