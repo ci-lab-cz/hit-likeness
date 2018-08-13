@@ -85,7 +85,7 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--overall_stat', metavar='overall_stat.txt', required=False, default=None,
                         help='text file with calculated statistics. A file with observed values should '
                              'be supplied to calculate statistics. Default: None.')
-    parser.add_argument('-j', '--assay_stat', metavar='assay_stat.txt', required=False, default=None,
+    parser.add_argument('-a', '--assay_stat', metavar='assay_stat.txt', required=False, default=None,
                         help='text file with calculated statistics for each assay. A file with observed values should '
                              'be supplied to calculate statistics. Default: None.')
     parser.add_argument('-d', '--detailed', action='store_true', default=False,
@@ -145,18 +145,20 @@ if __name__ == '__main__':
         f_assay = open(assay_stat_fname, 'wt')
         f_assay.write('tree\t' + '\t'.join(y.columns) + '\n')
 
-    if overall_stat_fname or assay_stat_fname:
+    if detailed:
+        r = range(pred.shape[1])  # iterate over all trees
+    else:
+        r = [pred.shape[1] - 1]   # last tree
 
-        r = range(pred.shape[1])   # iterate over all trees
-        if not detailed:
-            r = [pred.shape[1] - 1]   # last tree
+    for j in r:
 
-        for j in r:
+        if overall_stat_fname:
             ids = pred.iloc[:, j] >= 1
             e_median = enrichment(y.loc[ids, :], ref_hit_rate, np.median)
             e_mean = enrichment(y.loc[ids, :], ref_hit_rate, np.mean)
             f_overall.write('\t'.join(map(str, (j + 1, sum(ids), round(sum(ids) / y.shape[0], 3), round(e_median, 3), round(e_mean, 3)))) + '\n')
 
+        if assay_stat_fname:
             e_assay = np.apply_along_axis(hit_rate, 0, y.loc[ids, :]) / ref_hit_rate
             f_assay.write(str(j + 1) + '\t' + '\t'.join(map(str, np.round(e_assay, 3))) + '\n')
 
