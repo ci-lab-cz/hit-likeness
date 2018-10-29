@@ -98,7 +98,7 @@ if __name__ == '__main__':
 
     job_ids = dict()
     for i, trees in enumerate(get_ntrees_per_node(ntree, nnodes)):
-        pbs_name = os.path.join(job_dir, out_fname.replace('.pkl', '_batch%i.pbs') % i)
+        pbs_name = os.path.join(job_dir, os.path.basename(out_fname).replace('.pkl', '_batch%i.pbs') % i)
         script = """
         #!/bin/bash
         #PBS -l select=1:ncpus=%i
@@ -106,7 +106,7 @@ if __name__ == '__main__':
         source activate rdkit-1709
         cd %s
         """ % (ncpu, os.path.dirname(os.path.abspath(__file__)))
-        batch_fname = out_fname.replace('.pkl', '_batch%i.pkl') % i
+        batch_fname = pbs_name.replace('.pbs', '.pkl')
         script += f'python3 forest.py -x {x_fname} -y {y_fname} -o {out_fname} -t {trees} -m {nvar} ' \
                   f'-p {min_parent_num} -n {min_child_num} -c {ncpu} -a {algorithm}'
         with open(pbs_name, "wt") as f:
