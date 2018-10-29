@@ -92,7 +92,7 @@ if __name__ == '__main__':
                                   algorithm))
     out_fname = os.path.abspath(out_fname)
 
-    job_dir = os.path.dirname(out_fname)
+    job_dir = os.path.join(os.path.dirname(out_fname), 'jobs')
     if not os.path.exists(job_dir):
         os.makedirs(job_dir)
 
@@ -105,7 +105,7 @@ if __name__ == '__main__':
         #PBS -k eo
         source activate rdkit-1709
         cd %s
-        """ % (ncpu, os.path.abspath(__file__))
+        """ % (ncpu, os.path.dirname(os.path.abspath(__file__)))
         batch_fname = out_fname.replace('.pkl', '_batch%i.pkl') % i
         script += f'python3 forest.py -x {x_fname} -y {y_fname} -o {out_fname} -t {trees} -m {nvar} ' \
                   f'-p {min_parent_num} -n {min_child_num} -c {ncpu} -a {algorithm}'
