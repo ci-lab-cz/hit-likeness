@@ -269,12 +269,12 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--nsamples', metavar='INTEGER', required=False, default=0.67,
                         help='portion of randomly chosen compounds to train each tree. Should be greater than 0 and '
                              'less or equal to 1. Default: 0.67.')
-    parser.add_argument('-p', '--min_parent', metavar='INTEGER', required=False, default=10000,
-                        help='minimum number of items in parent node to split. Default: 10000.')
-    parser.add_argument('-n', '--min_child', metavar='INTEGER', required=False, default=100,
-                        help='minimum number of items in child node to create. Default: 100.')
-    parser.add_argument('-a', '--algorithm', metavar='INTEGER', required=False, default=1,
-                        help='the number of a splitting algorithm. Default: 1.')
+    parser.add_argument('-p', '--min_parent', metavar='INTEGER', required=False, default=3000,
+                        help='minimum number of items in parent node to split. Default: 3000.')
+    parser.add_argument('-n', '--min_child', metavar='INTEGER', required=False, default=1000,
+                        help='minimum number of items in child node to create. Default: 1000.')
+    parser.add_argument('-a', '--algorithm', metavar='INTEGER', required=False, default=2,
+                        help='the number of a splitting algorithm. Default: 2.')
     parser.add_argument('-c', '--ncpu', metavar='INTEGER', required=False, default=1,
                         help='number of CPUs used to built a tree. Default: 1.')
     parser.add_argument('-v', '--verbose', action='store_true', default=False,
