@@ -105,7 +105,7 @@ if __name__ == '__main__':
         cd %s
         """ % (ncpu, os.path.abspath(__file__))
         batch_fname = out_fname.replace('.pkl', '_batch%i.pkl') % i
-        script += f'python3 forest_mp.py -x {x_name} -y {y_fname} -o {out_fname} -t {trees} -m {nvar} ' \
+        script += f'python3 forest.py -x {x_name} -y {y_fname} -o {out_fname} -t {trees} -m {nvar} ' \
                   f'-p {min_parent_num} -n {min_child_num} -c {ncpu} -a {algorithm}'
         with open(pbs_name, "wt") as f:
             f.write(script)
