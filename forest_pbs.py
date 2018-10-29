@@ -61,6 +61,8 @@ if __name__ == '__main__':
                         help='number of computational nodes used to built a forest. Default: 10.')
     parser.add_argument('-c', '--ncpu', metavar='INTEGER', required=False, default=32,
                         help='number of CPUs per node used to built a forest. Default: 32.')
+    parser.add_argument('-e', '--env', metavar='CONDA_ENV_NAME', required=False, default='rdkit-1709',
+                        help='name of the conda environment. Default: rdkit-1709.')
     parser.add_argument('-v', '--verbose', action='store_true', default=False,
                         help='print progress.')
 
