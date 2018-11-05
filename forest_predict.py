@@ -111,6 +111,7 @@ if __name__ == '__main__':
     if y_fname:
         y = pd.read_table(y_fname, sep="\t", index_col=0)
         ref_hit_rate = np.apply_along_axis(hit_rate, 0, y)
+        x = x.reindex(y.index)
 
     # estimate predictions of the forest
 
