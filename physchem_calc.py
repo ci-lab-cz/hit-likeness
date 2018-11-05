@@ -6,6 +6,7 @@ import sys
 import argparse
 from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors
+from rdkit.Chem.Scaffolds.MurckoScaffold import GetScaffoldForMol
 from multiprocessing import Pool, cpu_count
 
 
@@ -19,10 +20,17 @@ def calc(smi, name):
         psa = rdMolDescriptors.CalcTPSA(m)
         logp, mr = rdMolDescriptors.CalcCrippenDescriptors(m)
         mw = rdMolDescriptors._CalcMolWt(m)
-        return name, hba, hbd, hba + hbd, nrings, rtb, round(psa, 2), round(logp, 2), round(mr, 2), round(mw, 2)
+        csp3 = rdMolDescriptors.CalcFractionCSP3(m)
+        fmf = GetScaffoldForMol(m).GetNumAtoms(onlyHeavy=True) / m.GetNumAtoms(onlyHeavy=True)
+        return name, hba, hbd, hba + hbd, nrings, rtb, round(psa, 2), round(logp, 2), round(mr, 2), round(mw, 2), \
+               round(csp3, 3), round(fmf, 3)
     else:
         sys.stderr.write('smiles %s cannot be parsed (%s)' % (smi, name))
         return None
+
+
+def calc_mp(items):
+    return calc(*items)
 
 
 def read_smi(fname, sep="\t"):
@@ -60,7 +68,7 @@ if __name__ == '__main__':
 
     with open(out_fname, 'wt') as f:
         f.write('\t'.join(['Name', 'HBA', 'HBD', 'complexity', 'NumRings', 'RTB', 'TPSA', 'logP', 'MR', 'MW']) + '\n')
-        for i, res in enumerate(p.starmap(calc, read_smi(in_fname), chunksize=100)):
+        for i, res in enumerate(p.imap(calc_mp, read_smi(in_fname), chunksize=100)):
             f.write('\t'.join(map(str, res)) + '\n')
             if verbose and i % 100 == 0:
                 sys.stderr.write('\r%i molecules passed' % (i + 1))
