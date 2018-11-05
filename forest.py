@@ -68,8 +68,8 @@ def find_x_split(x1, y, ref, fun, min_num, algorithm):
         u = select(u.tolist(), 100)  # select maximum 100 splits
     for i in u:
         if sum(x1 <= i) >= min_num and sum(x1 > i) >= min_num:
-            h1 = enrichment(y.loc[x1 <= i, :], ref, fun)
-            h2 = enrichment(y.loc[x1 > i, :], ref, fun)
+            h1 = enrichment(y.loc[x1 < i, :], ref, fun)
+            h2 = enrichment(y.loc[x1 >= i, :], ref, fun)
             if algorithm == 1:
                 score = min(h1, h2)
             elif algorithm == 2:
@@ -137,7 +137,7 @@ def grow_tree(x, y, nvar, ref, fun, parent_id, min_parent_num, min_child_num, al
                           treshold=threshold,
                           # mol_names=mol_names[ids],
                           nmols=sum(ids),
-                          rule=(var_name, '<=', threshold),
+                          rule=(var_name, '<', threshold),
                           enrichment=e1)
             tree.add_node(right_id,
                           parent=parent_id,
@@ -145,7 +145,7 @@ def grow_tree(x, y, nvar, ref, fun, parent_id, min_parent_num, min_child_num, al
                           treshold=threshold,
                           # mol_names=mol_names[np.logical_not(ids)],
                           nmols=sum(np.logical_not(ids)),
-                          rule=(var_name, '>', threshold),
+                          rule=(var_name, '>=', threshold),
                           enrichment=e2)
             tree.add_edge(parent_id, left_id)
             tree.add_edge(parent_id, right_id)
@@ -182,10 +182,10 @@ def predict_tree(tree, x):
     def __predict(tree, node_id, x, prediction):
         s = list(tree.successors(node_id))
         if s:
-            if tree.node[s[0]]['rule'][1] == '<=':
-                case_ids = x.loc[:, tree.node[s[0]]['rule'][0]] <= tree.node[s[0]]['rule'][2]
+            if tree.node[s[0]]['rule'][1] == '<':
+                case_ids = x.loc[:, tree.node[s[0]]['rule'][0]] < tree.node[s[0]]['rule'][2]
             else:
-                case_ids = x.loc[:, tree.node[s[0]]['rule'][0]] > tree.node[s[0]]['rule'][2]
+                case_ids = x.loc[:, tree.node[s[0]]['rule'][0]] >= tree.node[s[0]]['rule'][2]
             __predict(tree, s[0], x.loc[case_ids, :], prediction)
             __predict(tree, s[1], x.loc[~case_ids, :], prediction)
         else:
