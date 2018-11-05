@@ -67,7 +67,7 @@ if __name__ == '__main__':
     p = Pool(min(ncpu, cpu_count()))
 
     with open(out_fname, 'wt') as f:
-        f.write('\t'.join(['Name', 'HBA', 'HBD', 'complexity', 'NumRings', 'RTB', 'TPSA', 'logP', 'MR', 'MW']) + '\n')
+        f.write('\t'.join(['Name', 'HBA', 'HBD', 'complexity', 'NumRings', 'RTB', 'TPSA', 'logP', 'MR', 'MW', 'Csp3', 'fmf']) + '\n')
         for i, res in enumerate(p.imap(calc_mp, read_smi(in_fname), chunksize=100)):
             f.write('\t'.join(map(str, res)) + '\n')
             if verbose and i % 100 == 0:
