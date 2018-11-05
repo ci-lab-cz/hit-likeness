@@ -67,7 +67,7 @@ def find_x_split(x1, y, ref, fun, min_num, algorithm):
     if u.shape[0] > 100:
         u = select(u.tolist(), 100)  # select maximum 100 splits
     for i in u:
-        if sum(x1 <= i) >= min_num and sum(x1 > i) >= min_num:
+        if sum(x1 < i) >= min_num and sum(x1 >= i) >= min_num:
             h1 = enrichment(y.loc[x1 < i, :], ref, fun)
             h2 = enrichment(y.loc[x1 >= i, :], ref, fun)
             if algorithm == 1:
