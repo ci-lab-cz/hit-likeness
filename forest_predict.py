@@ -4,7 +4,7 @@ import pickle
 import glob
 import os
 import argparse
-from forest_mp import hit_rate, enrichment, predict_tree
+from forest import hit_rate, enrichment, predict_tree
 
 # x_fname = '/home/pavel/QSAR/pmapper/nconf/tree/rdkit-desc/49assays_no_pains_fh/forest_test/x_test_bin.txt'
 # x_fname = '/home/pavel/QSAR/pmapper/nconf/tree/rdkit-desc/49assays_no_pains_fh/x_test.txt'
