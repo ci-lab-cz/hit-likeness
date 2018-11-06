@@ -94,8 +94,7 @@ if __name__ == '__main__':
     out_fname = os.path.abspath(out_fname)
 
     job_dir = os.path.join(os.path.dirname(out_fname), 'jobs')
-    if not os.path.exists(job_dir):
-        os.makedirs(job_dir)
+    os.makedirs(job_dir, exist_ok=True)
 
     job_ids = dict()
     for i, trees in enumerate(get_ntrees_per_node(ntree, nnodes)):
