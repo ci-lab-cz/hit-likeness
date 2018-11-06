@@ -328,8 +328,9 @@ if __name__ == '__main__':
 
     if out_fname is None:
         out_fname = os.path.join(os.path.dirname(x_fname),
-                                 "forest_%s_t%i_v%i_p%i_c%i_alg%i.pkl" %
+                                 "forest_%s_%s_t%i_v%i_p%i_c%i_alg%i.pkl" %
                                  (os.path.basename(x_fname).rsplit('.', 1)[0],
+                                  os.path.basename(y_fname).rsplit('.', 1)[0],
                                   ntree,
                                   nvar,
                                   min_parent_num,
