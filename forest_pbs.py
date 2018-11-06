@@ -126,3 +126,6 @@ if __name__ == '__main__':
     for fname in job_ids.values():
         forest.extend(pickle.load(open(fname, 'rb')))
     pickle.dump(forest, open(out_fname, 'wb'))
+
+    for fname in job_ids.values():
+        os.remove(fname)
