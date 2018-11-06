@@ -1,72 +1,10 @@
 import pandas as pd
 import numpy as np
 import pickle
-import glob
-import os
 import argparse
+import warnings
 from forest import hit_rate, enrichment, predict_tree
 
-# x_fname = '/home/pavel/QSAR/pmapper/nconf/tree/rdkit-desc/49assays_no_pains_fh/forest_test/x_test_bin.txt'
-# x_fname = '/home/pavel/QSAR/pmapper/nconf/tree/rdkit-desc/49assays_no_pains_fh/x_test.txt'
-# y_fname = '/home/pavel/QSAR/pmapper/nconf/tree/rdkit-desc/49assays_no_pains_fh/forest_test/y_test.txt'
-#
-# # x_fname = '/home/pavel/QSAR/pmapper/nconf/tree/rdkit-desc/49assays_no_pains_fh/forest_test/x_bin.txt'
-# # y_fname = '/home/pavel/QSAR/pmapper/nconf/tree/rdkit-desc/49assays_no_pains_fh/forest_test/y.txt'
-#
-# y = pd.read_table(y_fname, sep="\t", index_col=0)
-# x = pd.read_table(x_fname, sep="\t", index_col=0)
-#
-# # trees = pickle.load(open('/home/pavel/QSAR/pmapper/nconf/tree/rdkit-desc/49assays_no_pains_fh/forest_test/tree_x_bin_p10000_c10000_alg7.pkl', 'rb'))
-# # trees = pickle.load(open('/home/pavel/QSAR/pmapper/nconf/tree/rdkit-desc/49assays_no_pains_fh/forest_test/tree.pkl', 'rb'))
-# # trees = pickle.load(open('/home/pavel/QSAR/pmapper/nconf/tree/rdkit-desc/49assays_no_pains_fh/forest_test/forest_x_bin_t10_v3_p10000_c1000_alg1.pkl', 'rb'))
-#
-# # trees = pickle.load(open('/home/pavel/QSAR/pmapper/nconf/tree/rdkit-desc/49assays_no_pains_fh/forest_pbs/forest_0.pkl', 'rb'))
-#
-# # dir_name = '/home/pavel/QSAR/pmapper/nconf/tree/rdkit-desc/49assays_no_pains_fh/forest_pbs/'
-# # dir_name = '/home/pavel/QSAR/pmapper/nconf/tree/rdkit-desc/49assays_no_pains_fh/forest_p3000_c1000_alg2_m3_t5_realx/'
-# dir_name = '/home/pavel/QSAR/pmapper/nconf/tree/rdkit-desc/49assays_no_pains_fh/forest_p3000_c1000_alg3_m3_t5_realx/'
-#
-# flist = [file for file in glob.glob1(dir_name, "forest_*.pkl")]
-#
-# trees = []
-# for fname in flist:
-#     trees.extend(pickle.load(open(os.path.join(dir_name, fname), 'rb')))
-#
-# ref_hit_rate = np.apply_along_axis(hit_rate, 0, y)
-#
-# # estimate predictions of the forest
-#
-# pred = predict_forest(trees, x)
-# for i in [1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6]:
-#     ids = pred >= i
-#     e = enrichment(y.loc[ids, :], ref_hit_rate, np.median)
-#     print(i, sum(ids), round(sum(ids) / y.shape[0], 3), round(e, 3))
-#
-# # estimate predictions by trees
-#
-# pred = []
-# for tree in trees:
-#     pred.append(predict_tree(tree, x))
-# pred = pd.concat(pred, axis=1)
-# pred.columns = list(range(pred.shape[1]))
-# pred = pred.cumsum(1).divide(pd.Series(list(range(1, pred.shape[1] + 1))))
-#
-# # for j in range(pred.shape[1]):
-# #     print('ntree = %i' % (j + 1))
-# #     for i in [1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6]:
-# #         ids = pred.iloc[:, j] >= i
-# #         e = enrichment(y.loc[ids, :], ref_hit_rate, np.median)
-# #         print(i, sum(ids), round(sum(ids) / y.shape[0], 3), round(e, 3))
-#
-# with open(os.path.join(dir_name, 'stat.txt'), 'wt') as f:
-#     f.write('tree\tcompounds\tcoverage\tmedian enrichment\tmean enrichment\n')
-#     for j in range(pred.shape[1]):
-#         # print('ntree = %i' % (j + 1))
-#         ids = pred.iloc[:, j] >= 1
-#         e_median = enrichment(y.loc[ids, :], ref_hit_rate, np.median)
-#         e_mean = enrichment(y.loc[ids, :], ref_hit_rate, np.mean)
-#         print(j + 1, sum(ids), round(sum(ids) / y.shape[0], 3), round(e_median, 3), round(e_mean, 3))
-#         f.write('\t'.join(map(str, (j + 1, sum(ids), round(sum(ids) / y.shape[0], 3), round(e_median, 3), round(e_mean, 3)))) + '\n')
 
 if __name__ == '__main__':
 
@@ -160,7 +98,9 @@ if __name__ == '__main__':
             f_overall.write('\t'.join(map(str, (j + 1, sum(ids), round(sum(ids) / y.shape[0], 3), round(e_median, 3), round(e_mean, 3)))) + '\n')
 
         if assay_stat_fname:
-            e_assay = np.apply_along_axis(hit_rate, 0, y.loc[ids, :]) / ref_hit_rate
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore', RuntimeWarning)
+                e_assay = np.apply_along_axis(hit_rate, 0, y.loc[ids, :]) / ref_hit_rate
             f_assay.write(str(j + 1) + '\t' + '\t'.join(map(str, np.round(e_assay, 3))) + '\n')
 
             # if verbose:

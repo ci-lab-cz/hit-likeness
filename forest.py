@@ -5,6 +5,7 @@ import numpy as np
 import networkx as nx
 import pickle
 import os
+import warnings
 import pandas as pd
 from multiprocessing import Pool, cpu_count
 
@@ -29,7 +30,9 @@ def enrichment(y, ref, fun):
     :param fun: function to summarise enrichment across assays (mean, median, etc)
     :return:
     """
-    e = np.apply_along_axis(hit_rate, 0, y) / ref
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', RuntimeWarning)
+        e = np.apply_along_axis(hit_rate, 0, y) / ref
     return fun(e[np.logical_not(np.isnan(e))])
 
 
