@@ -49,7 +49,7 @@ if __name__ == '__main__':
     if y_fname:
         y = pd.read_table(y_fname, sep="\t", index_col=0)
         ref_hit_rate = np.apply_along_axis(hit_rate, 0, y)
-        x = x.reindex(y.index)
+        y = y.reindex(x.index)
 
     # estimate predictions of the forest
 
@@ -69,12 +69,13 @@ if __name__ == '__main__':
     # matrix N mols x T trees with predicted values for different number of trees in a forest
     pred = pred.cumsum(1).divide(pd.Series(list(range(1, pred.shape[1] + 1))))
     pred.columns = list(range(1, pred.shape[1] + 1))
+    pred = pred.round(3)
 
     if pred_fname:
         if detailed:
-            pred.round(3).to_csv(pred_fname, sep='\t')
+            pred.to_csv(pred_fname, sep='\t')
         else:
-            pred.iloc[:, -1].round(3).to_csv(pred_fname, sep='\t')
+            pred.iloc[:, -1].to_csv(pred_fname, sep='\t')
 
     if overall_stat_fname:
         f_overall = open(overall_stat_fname, 'wt')
