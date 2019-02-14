@@ -345,9 +345,9 @@ if __name__ == '__main__':
     #     '/home/pavel/QSAR/pmapper/nconf/tree/rdkit-desc/49assays_no_pains_fh/forest_test/forest_x_bin_t4_v3_p10000_c10000_alg1.pkl',
     #     'rb'))
 
-    oob_pred = predict_oob(forest, x)
-    ref_hit_rate = np.apply_along_axis(hit_rate, 0, y)
-    for i in range(10, int(max(oob_pred) * 10)):
-        ids = oob_pred.index[oob_pred >= i / 10]
-        e = enrichment(y.loc[ids, :], ref_hit_rate, np.median)
-        print(i / 10, ids.shape[0], ids.shape[0] / y.shape[0], e)
+    # oob_pred = predict_oob(forest, x)
+    # ref_hit_rate = np.apply_along_axis(hit_rate, 0, y)
+    # for i in range(10, int(max(oob_pred) * 10)):
+    #     ids = oob_pred.index[oob_pred >= i / 10]
+    #     e = enrichment(y.loc[ids, :], ref_hit_rate, np.median)
+    #     print(i / 10, ids.shape[0], ids.shape[0] / y.shape[0], e)
