@@ -1,9 +1,7 @@
 import pandas as pd
-import numpy as np
 import pickle
 import argparse
-import warnings
-from forest import hit_rate, enrichment, predict_tree
+from forest import predict_tree
 
 
 if __name__ == '__main__':
@@ -12,97 +10,55 @@ if __name__ == '__main__':
     parser.add_argument('-x', metavar='descriptors.txt', required=True,
                         help='text file with descriptors (tab-separated).'
                              'Header is present. The first column contains compound names.')
-    parser.add_argument('-y', metavar='activity.txt', required=False, default=None,
-                        help='text file with activity values 0/1/NA (tab-separated).'
-                             'Header is present. The first column contains compound names.'
-                             'If not specified no statistics will be calculated.')
     parser.add_argument('-m', '--model', metavar='model.pkl', required=True,
-                        help='file with pickled model.')
+                        help='file with a pickled model.')
     parser.add_argument('-p', '--prediction', metavar='predictions.txt', required=False, default=None,
                         help='text file with predicted values. Default: None.')
-    parser.add_argument('-s', '--overall_stat', metavar='overall_stat.txt', required=False, default=None,
-                        help='text file with calculated statistics. A file with observed values should '
-                             'be supplied to calculate statistics. Default: None.')
-    parser.add_argument('-a', '--assay_stat', metavar='assay_stat.txt', required=False, default=None,
-                        help='text file with calculated statistics for each assay. A file with observed values should '
-                             'be supplied to calculate statistics. Default: None.')
-    parser.add_argument('-d', '--detailed', action='store_true', default=False,
-                        help='calculate statistics after addition of each tree and '
-                             'store predictions for ensembles with variable number of trees.')
-    parser.add_argument('-v', '--verbose', action='store_true', default=False,
-                        help='print progress.')
+    parser.add_argument('-o', '--oob', metavar='oob_predictions.txt', required=False, default=None,
+                        help='text file with predicted values. X values for the training set of the model '
+                             'should be supplied to get correct results. Default: None.')
+    parser.add_argument('-c', '--cumulative', action='store_true', default=False,
+                        help='to make cumulative predictions: the first column is predictions for the first tree, '
+                             'the second one - the first two tress, and so on. This option is only needed if one wants '
+                             'to track changes in accuracy predictions with increasing number of trees in the model.')
 
     args = vars(parser.parse_args())
     for o, v in args.items():
         if o == "x": x_fname = v
-        if o == "y": y_fname = v
         if o == "model": model_fname = v
         if o == "prediction": pred_fname = v
-        if o == "overall_stat": overall_stat_fname = v
-        if o == "assay_stat": assay_stat_fname = v
-        if o == "detailed": detailed = v
-        if o == "verbose": verbose = v
+        if o == "oob": oob_fname = v
+        if o == "cumulative": cumulative = v
+
+    if pred_fname is None and oob_fname is None:
+        raise ValueError('at least one of outputs should be specified: prediction for the whole set or for oob.')
 
     model = pickle.load(open(model_fname, 'rb'))
 
     x = pd.read_table(x_fname, sep="\t", index_col=0)
-    if y_fname:
-        y = pd.read_table(y_fname, sep="\t", index_col=0)
-        ref_hit_rate = np.apply_along_axis(hit_rate, 0, y)
-        y = y.reindex(x.index)
-
-    # estimate predictions of the forest
-
-    # pred = predict_forest(model, x)
-    # for i in [1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6]:
-    #     ids = pred >= i
-    #     e = enrichment(y.loc[ids, :], ref_hit_rate, np.median)
-    #     print(i, sum(ids), round(sum(ids) / y.shape[0], 3), round(e, 3))
-
-    # estimate predictions by trees
 
     pred = []
     for tree in model:
         pred.append(predict_tree(tree, x))
     pred = pd.concat(pred, axis=1)
     pred.columns = list(range(pred.shape[1]))
-    # matrix N mols x T trees with predicted values for different number of trees in a forest
-    pred = pred.cumsum(1).divide(pd.Series(list(range(1, pred.shape[1] + 1))))
-    pred.columns = list(range(1, pred.shape[1] + 1))
-    pred = pred.round(3)
 
     if pred_fname:
-        if detailed:
-            pred.to_csv(pred_fname, sep='\t')
+        if cumulative:
+            pred_cum = pred.cumsum(1).divide(pd.Series(list(range(1, pred.shape[1] + 1))))
+            pred_cum.columns = list(range(1, pred_cum.shape[1] + 1))
+            pred_cum.round(3).to_csv(pred_fname, sep='\t')
         else:
-            pred.iloc[:, -1].to_csv(pred_fname, sep='\t')
+            tmp = pred.mean(axis=1).round(3).to_frame(name=len(model))
+            tmp.to_csv(pred_fname, sep='\t')
 
-    if overall_stat_fname:
-        f_overall = open(overall_stat_fname, 'wt')
-        f_overall.write('tree\tcompounds\tcoverage\tmedian enrichment\tmean enrichment\n')
-
-    if assay_stat_fname:
-        f_assay = open(assay_stat_fname, 'wt')
-        f_assay.write('tree\t' + '\t'.join(y.columns) + '\n')
-
-    if detailed:
-        r = range(pred.shape[1])  # iterate over all trees
-    else:
-        r = [pred.shape[1] - 1]   # last tree
-
-    for j in r:
-
-        if overall_stat_fname:
-            ids = pred.iloc[:, j] >= 1
-            e_median = enrichment(y.loc[ids, :], ref_hit_rate, np.median)
-            e_mean = enrichment(y.loc[ids, :], ref_hit_rate, np.mean)
-            f_overall.write('\t'.join(map(str, (j + 1, sum(ids), round(sum(ids) / y.shape[0], 3), round(e_median, 3), round(e_mean, 3)))) + '\n')
-
-        if assay_stat_fname:
-            with warnings.catch_warnings():
-                warnings.simplefilter('ignore', RuntimeWarning)
-                e_assay = np.apply_along_axis(hit_rate, 0, y.loc[ids, :]) / ref_hit_rate
-            f_assay.write(str(j + 1) + '\t' + '\t'.join(map(str, np.round(e_assay, 3))) + '\n')
-
-            # if verbose:
-            #     print(j + 1, sum(ids), round(sum(ids) / y.shape[0], 3), round(e_median, 3), round(e_mean, 3))
+    if oob_fname:
+        for i in range(len(model)):
+            pred.loc[pred.index.isin(model[i].node[-1]['mol_names']), i] = None
+        if cumulative:
+            pred_cum = pred.cumsum(1).divide(pd.Series(list(range(1, pred.shape[1] + 1))))
+            pred_cum.columns = list(range(1, pred_cum.shape[1] + 1))
+            pred_cum.round(3).fillna(axis=1, method='ffill').to_csv(oob_fname, sep='\t')
+        else:
+            tmp = pred.mean(axis=1).round(3).to_frame(name=len(model))
+            tmp.to_csv(oob_fname, sep='\t')
