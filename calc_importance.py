@@ -39,7 +39,7 @@ if __name__ == '__main__':
         if o == "output": output_fname = v
         if o == "repeats": n_repeats = int(v)
 
-    model = pickle.load(open(model_fname, 'rb'))[:10]
+    model = pickle.load(open(model_fname, 'rb'))
     x = pd.read_table(x_fname, sep="\t", index_col=0)
     y = pd.read_table(y_fname, sep="\t", index_col=0)
     ref_hit_rate = np.apply_along_axis(hit_rate, 0, y)
