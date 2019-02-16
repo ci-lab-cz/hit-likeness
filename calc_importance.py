@@ -46,7 +46,8 @@ if __name__ == '__main__':
 
     ref_pred = predict_oob(model, x)
     ids = ref_pred >= 1
-    ref_e_median = enrichment(y.loc[ids, :], ref_hit_rate, np.median)
+    e_median = enrichment(y.loc[ids, :], ref_hit_rate, np.median)
+    ref_imp = sum(ids) * e_median
 
     imp = pd.DataFrame(index=x.columns, columns=range(n_repeats))
     for n in range(n_repeats):
@@ -55,9 +56,9 @@ if __name__ == '__main__':
             xx[i] = xx[i].sample(frac=1).tolist()
             pred = predict_oob(model, xx)
             ids = pred >= 1
-            imp.loc[i, n] = enrichment(y.loc[ids, :], ref_hit_rate, np.median)
+            imp.loc[i, n] = enrichment(y.loc[ids, :], ref_hit_rate, np.median) * sum(ids)
 
-    imp = ref_e_median - imp
+    imp = ref_imp - imp
     res = pd.concat([imp, imp.mean(axis=1), imp.std(axis=1)], axis=1).round(3)
     res.columns = list(range(1, n_repeats + 1)) + ['mean', 'sd']
     res.to_csv(output_fname, sep="\t")
