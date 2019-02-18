@@ -309,6 +309,9 @@ if __name__ == '__main__':
     y = pd.read_table(y_fname, sep="\t", index_col=0)
     x = pd.read_table(x_fname, sep="\t", index_col=0)
 
+    if not all(x == y for x, y in zip(sorted(x.index), sorted(y.index))):
+        raise ValueError('compound names in X and Y files do not correspond.')
+
     x = x.reindex(y.index)
 
     # trees = pickle.load(open('/home/pavel/QSAR/pmapper/nconf/tree/rdkit-desc/49assays_no_pains_fh/forest_test/tree_x_bin_p10000_c10000_alg7.pkl', 'rb'))
