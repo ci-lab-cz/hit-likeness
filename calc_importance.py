@@ -59,6 +59,6 @@ if __name__ == '__main__':
             imp.loc[i, n] = enrichment(y.loc[ids, :], ref_hit_rate, np.median) * sum(ids) / len(ids)
 
     imp = ref_imp - imp
-    res = pd.concat([imp, imp.mean(axis=1), imp.std(axis=1)], axis=1).round(3)
+    res = pd.concat([imp, imp.mean(axis=1), imp.std(axis=1)], axis=1)
     res.columns = list(range(1, n_repeats + 1)) + ['mean', 'sd']
-    res.to_csv(output_fname, sep="\t")
+    res.round(4).to_csv(output_fname, sep="\t")
