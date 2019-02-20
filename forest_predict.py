@@ -1,7 +1,17 @@
 import pandas as pd
 import pickle
 import argparse
+from multiprocessing import Pool, cpu_count
 from forest import predict_tree
+
+
+def predict_tree_mp(items):
+    return predict_tree(*items)
+
+
+def supply_data(model, x):
+    for tree in model:
+        yield tree, x
 
 
 if __name__ == '__main__':
@@ -17,10 +27,12 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--oob', metavar='oob_predictions.txt', required=False, default=None,
                         help='text file with predicted values. X values for the training set of the model '
                              'should be supplied to get correct results. Default: None.')
-    parser.add_argument('-c', '--cumulative', action='store_true', default=False,
+    parser.add_argument('-u', '--cumulative', action='store_true', default=False,
                         help='to make cumulative predictions: the first column is predictions for the first tree, '
                              'the second one - the first two tress, and so on. This option is only needed if one wants '
                              'to track changes in accuracy predictions with increasing number of trees in the model.')
+    parser.add_argument('-c', '--ncpu', metavar='NUMBER', required=False, default=1,
+                        help='number of CPU to use. Default: 1.')
 
     args = vars(parser.parse_args())
     for o, v in args.items():
@@ -29,17 +41,23 @@ if __name__ == '__main__':
         if o == "prediction": pred_fname = v
         if o == "oob": oob_fname = v
         if o == "cumulative": cumulative = v
+        if o == "ncpu": ncpu = int(v)
 
     if pred_fname is None and oob_fname is None:
         raise ValueError('at least one of outputs should be specified: prediction for the whole set or for oob.')
+
+    pool = Pool(min(ncpu, cpu_count())) if ncpu > 1 else None
 
     model = pickle.load(open(model_fname, 'rb'))
 
     x = pd.read_table(x_fname, sep="\t", index_col=0)
 
-    pred = []
-    for tree in model:
-        pred.append(predict_tree(tree, x))
+    if pool is not None:
+        pred = list(pool.imap(predict_tree_mp, supply_data(model, x)))
+    else:
+        pred = []
+        for tree in model:
+            pred.append(predict_tree(tree, x))
     pred = pd.concat(pred, axis=1)
     pred.columns = list(range(pred.shape[1]))
 
