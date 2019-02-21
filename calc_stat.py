@@ -66,5 +66,7 @@ if __name__ == '__main__':
                 e_assay = np.apply_along_axis(hit_rate, 0, y.loc[ids, :]) / ref_hit_rate
             f_astat.write(str(pred.columns[j]) + '\t' + '\t'.join(map(str, np.round(e_assay, 3))) + '\n')
 
-    f_stat.close()
-    f_astat.close()
+    if stat_fname:
+        f_stat.close()
+    if astat_fname:
+        f_astat.close()
