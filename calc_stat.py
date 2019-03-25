@@ -27,6 +27,8 @@ if __name__ == '__main__':
                         help='text file with calculated statistics. Default: None.')
     parser.add_argument('-a', '--assay_stat', metavar='assay_stat.txt', required=False, default=None,
                         help='text file with calculated statistics for each assay. Default: None.')
+    parser.add_argument('-t', '--threshold', metavar='NUMBER', required=False, default=1,
+                        help='floating point number which defines the threshold of compounds to select. Default: 1.')
 
     args = vars(parser.parse_args())
     for o, v in args.items():
@@ -34,6 +36,7 @@ if __name__ == '__main__':
         if o == "predictions": pred_fname = v
         if o == "overall_stat": stat_fname = v
         if o == "assay_stat": astat_fname = v
+        if o == "threshold": thr = float(v)
 
     if stat_fname is None and astat_fname is None:
         raise ValueError('at least one of outputs should be specified: overall_stat or assay_stat.')
@@ -50,10 +53,11 @@ if __name__ == '__main__':
 
     for j in range(pred.shape[1]):
 
+        ids = pred.iloc[:, j] >= thr
+
         if stat_fname:
             if j == 0:
                 f_stat.write('tree\tcompounds\tcoverage\tmedian enrichment\tmean enrichment\n')
-            ids = pred.iloc[:, j] >= 1
             e_median = enrichment(y.loc[ids, :], ref_hit_rate, np.median)
             e_mean = enrichment(y.loc[ids, :], ref_hit_rate, np.mean)
             f_stat.write('\t'.join(map(str, (pred.columns[j], sum(ids), round(sum(ids) / y.shape[0], 3), round(e_median, 3), round(e_mean, 3)))) + '\n')
