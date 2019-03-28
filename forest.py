@@ -19,7 +19,7 @@ def hit_rate(b):
     if len(b) > 0:
         return sum(b) / len(b)
     else:
-        return 0
+        return None
 
 
 def enrichment(y, ref, fun):
