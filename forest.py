@@ -187,8 +187,14 @@ def predict_tree(tree, x):
         if s:
             if tree.node[s[0]]['rule'][1] == '<':
                 case_ids = x.loc[:, tree.node[s[0]]['rule'][0]] < tree.node[s[0]]['rule'][2]
-            else:
+            elif tree.node[s[0]]['rule'][1] == '>=':
                 case_ids = x.loc[:, tree.node[s[0]]['rule'][0]] >= tree.node[s[0]]['rule'][2]
+            elif tree.node[s[0]]['rule'][1] == '>':
+                case_ids = x.loc[:, tree.node[s[0]]['rule'][0]] > tree.node[s[0]]['rule'][2]
+            elif tree.node[s[0]]['rule'][1] == '<=':
+                case_ids = x.loc[:, tree.node[s[0]]['rule'][0]] <= tree.node[s[0]]['rule'][2]
+            else:
+                raise ValueError('Value of the inequality sign in the tree rule is not correct')
             __predict(tree, s[0], x.loc[case_ids, :], prediction)
             __predict(tree, s[1], x.loc[~case_ids, :], prediction)
         else:
