@@ -31,6 +31,10 @@ if __name__ == '__main__':
                         help='to make cumulative predictions: the first column is predictions for the first tree, '
                              'the second one - the first two tress, and so on. This option is only needed if one wants '
                              'to track changes in accuracy predictions with increasing number of trees in the model.')
+    parser.add_argument('-s', '--sd', action='store_true', default=False,
+                        help='set this argument to calculate standard deviation among predictions of individual trees '
+                             'which can be used as a measure of applicability domain. If -u agrument was set the '
+                             'sd argument will be ignored.')
     parser.add_argument('-c', '--ncpu', metavar='NUMBER', required=False, default=1,
                         help='number of CPU to use. Default: 1.')
 
@@ -42,9 +46,13 @@ if __name__ == '__main__':
         if o == "oob": oob_fname = v
         if o == "cumulative": cumulative = v
         if o == "ncpu": ncpu = int(v)
+        if o == "sd": sd = v
 
     if pred_fname is None and oob_fname is None:
         raise ValueError('at least one of outputs should be specified: prediction for the whole set or for oob.')
+
+    if cumulative:
+        sd = False
 
     pool = Pool(min(ncpu, cpu_count())) if ncpu > 1 else None
 
@@ -68,7 +76,11 @@ if __name__ == '__main__':
             pred_cum.round(3).to_csv(pred_fname, sep='\t')
         else:
             tmp = pred.mean(axis=1).round(3).to_frame(name=len(model))
-            tmp.to_csv(pred_fname, sep='\t')
+            if not sd:
+                tmp.to_csv(pred_fname, sep='\t')
+            else:
+                tmp_sd = pred.std(axis=1).round(3).to_frame(name='sd')
+                pd.concat([tmp, tmp_sd], axis=1).to_csv(pred_fname, sep='\t')
 
     if oob_fname:
         for i in range(len(model)):
@@ -79,4 +91,8 @@ if __name__ == '__main__':
             pred_cum.round(3).fillna(axis=1, method='ffill').to_csv(oob_fname, sep='\t')
         else:
             tmp = pred.mean(axis=1).round(3).to_frame(name=len(model))
-            tmp.to_csv(oob_fname, sep='\t')
+            if not sd:
+                tmp.to_csv(oob_fname, sep='\t')
+            else:
+                tmp_sd = pred.std(axis=1).round(3).to_frame(name='sd')
+                pd.concat([tmp, tmp_sd], axis=1).to_csv(oob_fname, sep='\t')
