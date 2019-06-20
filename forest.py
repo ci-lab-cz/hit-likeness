@@ -19,7 +19,7 @@ def hit_rate(b):
     if len(b) > 0:
         return sum(b) / len(b)
     else:
-        return None
+        return np.nan
 
 
 def enrichment(y, ref, fun):
@@ -231,7 +231,7 @@ def create_tree(x, y, ref_hit_rate, nvar, nsamples, min_parent_num, min_child_nu
               y=y.iloc[case_ids, :],
               nvar=nvar,
               ref=ref_hit_rate,
-              fun=np.median,
+              fun=np.nanmedian,
               parent_id=-1,
               min_parent_num=min_parent_num,
               min_child_num=min_child_num,

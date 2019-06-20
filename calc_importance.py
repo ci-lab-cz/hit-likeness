@@ -26,7 +26,7 @@ def get_permutation_pred(model, x, y, ref_hit_rate):
         xx[i] = xx[i].sample(frac=1).tolist()
         pred = predict_oob(model, xx)
         ids = pred >= 1
-        enr.append(round(enrichment(y.loc[ids, :], ref_hit_rate, np.median), 4))
+        enr.append(round(enrichment(y.loc[ids, :], ref_hit_rate, np.nanmedian), 4))
         cov.append(round(sum(ids) / len(ids), 4))
     return enr, cov
 
@@ -76,7 +76,7 @@ if __name__ == '__main__':
 
     ref_pred = predict_oob(model, x)
     ids = ref_pred >= 1
-    ref_enrichment = round(enrichment(y.loc[ids, :], ref_hit_rate, np.median), 4)
+    ref_enrichment = round(enrichment(y.loc[ids, :], ref_hit_rate, np.nanmedian), 4)
     ref_coverage = round(sum(ids) / len(ids), 4)
     ref_imp = round(ref_enrichment * ref_coverage, 4)
 
@@ -94,7 +94,7 @@ if __name__ == '__main__':
                 xx[i] = xx[i].sample(frac=1).tolist()
                 pred = predict_oob(model, xx)
                 ids = pred >= 1
-                calc_enrichment.loc[i, n] = round(enrichment(y.loc[ids, :], ref_hit_rate, np.median), 4)
+                calc_enrichment.loc[i, n] = round(enrichment(y.loc[ids, :], ref_hit_rate, np.nanmedian), 4)
                 calc_coverage.loc[i, n] = round(sum(ids) / len(ids), 4)
 
     imp = ref_imp - calc_enrichment * calc_coverage

@@ -58,8 +58,8 @@ if __name__ == '__main__':
         if stat_fname:
             if j == 0:
                 f_stat.write('tree\tcompounds\tcoverage\tmedian enrichment\tmean enrichment\n')
-            e_median = enrichment(y.loc[ids, :], ref_hit_rate, np.median)
-            e_mean = enrichment(y.loc[ids, :], ref_hit_rate, np.mean)
+            e_median = enrichment(y.loc[ids, :], ref_hit_rate, np.nanmedian)
+            e_mean = enrichment(y.loc[ids, :], ref_hit_rate, np.nanmean)
             f_stat.write('\t'.join(map(str, (pred.columns[j], sum(ids), round(sum(ids) / y.shape[0], 3), round(e_median, 3), round(e_mean, 3)))) + '\n')
 
         if astat_fname:
