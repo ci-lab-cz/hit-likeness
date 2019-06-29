@@ -1,6 +1,7 @@
 import pandas as pd
 import pickle
 import argparse
+import os
 from multiprocessing import Pool, cpu_count
 from forest import predict_tree
 
@@ -51,6 +52,12 @@ if __name__ == '__main__':
     if pred_fname is None and oob_fname is None:
         raise ValueError('at least one of outputs should be specified: prediction for the whole set or for oob.')
 
+    if pred_fname is not None and os.path.isfile(pred_fname):
+        os.remove(pred_fname)
+
+    if oob_fname is not None and os.path.isfile(oob_fname):
+        os.remove(oob_fname)
+
     if cumulative:
         sd = False
 
@@ -58,41 +65,51 @@ if __name__ == '__main__':
 
     model = pickle.load(open(model_fname, 'rb'))
 
-    x = pd.read_table(x_fname, sep="\t", index_col=0)
+    for x in pd.read_table(x_fname, sep="\t", index_col=0, chunksize=100000):
 
-    if pool is not None:
-        pred = list(pool.imap(predict_tree_mp, supply_data(model, x)))
-    else:
-        pred = []
-        for tree in model:
-            pred.append(predict_tree(tree, x))
-    pred = pd.concat(pred, axis=1)
-    pred.columns = list(range(pred.shape[1]))
-
-    if pred_fname:
-        if cumulative:
-            pred_cum = pred.cumsum(1).divide(pd.Series(list(range(1, pred.shape[1] + 1))))
-            pred_cum.columns = list(range(1, pred_cum.shape[1] + 1))
-            pred_cum.round(3).to_csv(pred_fname, sep='\t')
+        if pool is not None:
+            pred = list(pool.imap(predict_tree_mp, supply_data(model, x)))
         else:
-            tmp = pred.mean(axis=1).round(3).to_frame(name=len(model))
-            if not sd:
-                tmp.to_csv(pred_fname, sep='\t')
-            else:
-                tmp_sd = pred.std(axis=1).round(3).to_frame(name='sd')
-                pd.concat([tmp, tmp_sd], axis=1).to_csv(pred_fname, sep='\t')
+            pred = []
+            for tree in model:
+                pred.append(predict_tree(tree, x))
+        pred = pd.concat(pred, axis=1)
+        pred.columns = list(range(pred.shape[1]))
 
-    if oob_fname:
-        for i in range(len(model)):
-            pred.loc[pred.index.isin(model[i].node[-1]['mol_names']), i] = None
-        if cumulative:
-            pred_cum = pred.cumsum(1).divide(pd.Series(list(range(1, pred.shape[1] + 1))))
-            pred_cum.columns = list(range(1, pred_cum.shape[1] + 1))
-            pred_cum.round(3).fillna(axis=1, method='ffill').to_csv(oob_fname, sep='\t')
-        else:
-            tmp = pred.mean(axis=1).round(3).to_frame(name=len(model))
-            if not sd:
-                tmp.to_csv(oob_fname, sep='\t')
+        if pred_fname:
+            if cumulative:
+                pred_cum = pred.cumsum(1).divide(pd.Series(list(range(1, pred.shape[1] + 1))))
+                pred_cum.columns = list(range(1, pred_cum.shape[1] + 1))
+                pred_result = pred_cum.round(3)
             else:
-                tmp_sd = pred.std(axis=1).round(3).to_frame(name='sd')
-                pd.concat([tmp, tmp_sd], axis=1).to_csv(oob_fname, sep='\t')
+                tmp = pred.mean(axis=1).round(3).to_frame(name=len(model))
+                if not sd:
+                    pred_result = tmp
+                else:
+                    tmp_sd = pred.std(axis=1).round(3).to_frame(name='sd')
+                    pred_result = pd.concat([tmp, tmp_sd], axis=1)
+
+            if os.path.isfile(pred_fname):
+                pred_result.to_csv(pred_fname, sep='\t', mode='a', header=False)
+            else:
+                pred_result.to_csv(pred_fname, sep='\t')
+
+        if oob_fname:
+            for i in range(len(model)):
+                pred.loc[pred.index.isin(model[i].node[-1]['mol_names']), i] = None
+            if cumulative:
+                pred_cum = pred.cumsum(1).divide(pd.Series(list(range(1, pred.shape[1] + 1))))
+                pred_cum.columns = list(range(1, pred_cum.shape[1] + 1))
+                oob_result = pred_cum.round(3).fillna(axis=1, method='ffill')
+            else:
+                tmp = pred.mean(axis=1).round(3).to_frame(name=len(model))
+                if not sd:
+                    oob_result = tmp
+                else:
+                    tmp_sd = pred.std(axis=1).round(3).to_frame(name='sd')
+                    oob_result = pd.concat([tmp, tmp_sd], axis=1)
+
+            if os.path.isfile(pred_fname):
+                oob_result.to_csv(oob_fname, sep='\t', mode='a', header=False)
+            else:
+                oob_result.to_csv(oob_fname, sep='\t')
