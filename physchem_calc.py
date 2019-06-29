@@ -10,6 +10,9 @@ from rdkit.Chem.Scaffolds.MurckoScaffold import GetScaffoldForMol
 from multiprocessing import Pool, cpu_count
 
 
+descriptor_names = ['HBA', 'HBD', 'complexity', 'NumRings', 'RTB', 'TPSA', 'logP', 'MR', 'MW', 'Csp3', 'fmf', 'qed']
+
+
 def calc(smi, name):
     m = Chem.MolFromSmiles(smi)
     if m is not None:
@@ -68,7 +71,7 @@ if __name__ == '__main__':
     p = Pool(min(ncpu, cpu_count()))
 
     with open(out_fname, 'wt') as f:
-        f.write('\t'.join(['Name', 'HBA', 'HBD', 'complexity', 'NumRings', 'RTB', 'TPSA', 'logP', 'MR', 'MW', 'Csp3', 'fmf', 'qed']) + '\n')
+        f.write('\t'.join(['Name'] + descriptor_names) + '\n')
         for i, res in enumerate(p.imap(calc_mp, read_smi(in_fname), chunksize=100)):
             if res:
                 f.write('\t'.join(map(str, res)) + '\n')
