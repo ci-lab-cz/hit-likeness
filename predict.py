@@ -41,6 +41,10 @@ class PredictHTS:
                 res = calc(smi, name)
                 if res:
                     output.append(res)
+        df = pd.DataFrame.from_records(output)
+        df = pd.DataFrame.from_records(output).set_index(0)
+        df.columns = descriptor_names
+        return df
         return pd.DataFrame.from_records(output, index='smiles', columns=['smiles'] + descriptor_names)
 
     def __predict(self, x):
@@ -59,4 +63,5 @@ class PredictHTS:
             x = self.__calc_desciptors(smiles_chunk)
             pred.append(self.__predict(x))
         pred = pd.concat(pred)
+        pred.columns = ['HTS-likeness']
         return pred
