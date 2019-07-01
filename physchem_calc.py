@@ -37,7 +37,7 @@ def calc_mp(items):
     return calc(*items)
 
 
-def read_smi(fname, sep="\t"):
+def read_smi(fname, sep):
     with open(fname) as f:
         for line in f:
             items = line.strip().split(sep)
@@ -56,6 +56,8 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--out', metavar='output.txt', required=True,
                         help='output text file with calculated physicochemical properties. '
                              'Molecules causing errors will be reported to stderr.')
+    parser.add_argument('-s', '--sep', metavar='CHAR', required=False, default=None,
+                        help='Field separator. Default: whitespaces.')
     parser.add_argument('-c', '--ncpu', metavar='INTEGER', required=False, default=1,
                         help='Number of CPU cores to use. Default: 1.')
     parser.add_argument('-v', '--verbose', action='store_true', default=False,
@@ -67,14 +69,15 @@ if __name__ == '__main__':
         if o == "out": out_fname = v
         if o == "ncpu": ncpu = int(v)
         if o == "verbose": verbose = v
+        if o == "sep": sep = v
 
     p = Pool(min(ncpu, cpu_count()))
 
     with open(out_fname, 'wt') as f:
         f.write('\t'.join(['Name'] + descriptor_names) + '\n')
-        for i, res in enumerate(p.imap(calc_mp, read_smi(in_fname), chunksize=100)):
+        for i, res in enumerate(p.imap(calc_mp, read_smi(in_fname, sep), chunksize=100)):
             if res:
                 f.write('\t'.join(map(str, res)) + '\n')
-            if verbose and i % 100 == 0:
+            if verbose and (i + 1) % 1000 == 0:
                 sys.stderr.write('\r%i molecules passed' % (i + 1))
                 sys.stderr.flush()
