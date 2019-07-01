@@ -37,14 +37,23 @@ def calc_mp(items):
     return calc(*items)
 
 
-def read_smi(fname, sep):
+def read_smi(fname, sep, start_pos, nlines):
+    start_pos -= 1
+    if nlines is not None:
+        end_pos = start_pos + nlines
+    else:
+        end_pos = float("inf")
     with open(fname) as f:
-        for line in f:
-            items = line.strip().split(sep)
-            if len(items) == 1:
-                yield items[0], items[0]
-            else:
-                yield items[0], items[1]
+        for i, line in enumerate(f):
+            if i >= start_pos:
+                if i < end_pos:
+                    items = line.strip().split(sep)
+                    if len(items) == 1:
+                        yield items[0], items[0]
+                    else:
+                        yield items[0], items[1]
+                else:
+                    raise StopIteration
 
 
 if __name__ == '__main__':
@@ -58,6 +67,10 @@ if __name__ == '__main__':
                              'Molecules causing errors will be reported to stderr.')
     parser.add_argument('-s', '--sep', metavar='CHAR', required=False, default=None,
                         help='Field separator. Default: whitespaces.')
+    parser.add_argument('-p', '--startpos', metavar='NUMBER', required=False, default=0,
+                        help='Starting line number to read SMILES. Default: 1 (beginning of the file).')
+    parser.add_argument('-l', '--lines', metavar='NUMBER', required=False, default=None,
+                        help='Number of lines (SMILES) to process. Default: None (all lines).')
     parser.add_argument('-c', '--ncpu', metavar='INTEGER', required=False, default=1,
                         help='Number of CPU cores to use. Default: 1.')
     parser.add_argument('-v', '--verbose', action='store_true', default=False,
@@ -70,12 +83,14 @@ if __name__ == '__main__':
         if o == "ncpu": ncpu = int(v)
         if o == "verbose": verbose = v
         if o == "sep": sep = v
+        if o == "startpos": start_pos = int(v)
+        if o == "lines": nlines = int(v)
 
     p = Pool(min(ncpu, cpu_count()))
 
     with open(out_fname, 'wt') as f:
         f.write('\t'.join(['Name'] + descriptor_names) + '\n')
-        for i, res in enumerate(p.imap(calc_mp, read_smi(in_fname, sep), chunksize=100)):
+        for i, res in enumerate(p.imap(calc_mp, read_smi(in_fname, sep, start_pos, nlines), chunksize=100)):
             if res:
                 f.write('\t'.join(map(str, res)) + '\n')
             if verbose and (i + 1) % 1000 == 0:
