@@ -84,7 +84,7 @@ if __name__ == '__main__':
         if o == "verbose": verbose = v
         if o == "sep": sep = v
         if o == "startpos": start_pos = int(v)
-        if o == "lines": nlines = int(v)
+        if o == "lines": nlines = int(v) if v is not None else None
 
     p = Pool(min(ncpu, cpu_count()))
 
