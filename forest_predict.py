@@ -109,7 +109,7 @@ if __name__ == '__main__':
                     tmp_sd = pred.std(axis=1).round(3).to_frame(name='sd')
                     oob_result = pd.concat([tmp, tmp_sd], axis=1)
 
-            if os.path.isfile(pred_fname):
+            if os.path.isfile(oob_fname):
                 oob_result.to_csv(oob_fname, sep='\t', mode='a', header=False)
             else:
                 oob_result.to_csv(oob_fname, sep='\t')
