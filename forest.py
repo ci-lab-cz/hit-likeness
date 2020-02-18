@@ -153,7 +153,7 @@ def grow_tree(x, y, nvar, ref, fun, parent_id, min_parent_num, min_child_num, al
             tree.add_edge(parent_id, left_id)
             tree.add_edge(parent_id, right_id)
             if verbose:
-                print(parent_id, left_id, tree.node[left_id]['rule'], tree.node[left_id]['nmols'], tree.node[left_id]['enrichment'])
+                print(parent_id, left_id, tree.nodes[left_id]['rule'], tree.nodes[left_id]['nmols'], tree.nodes[left_id]['enrichment'])
             grow_tree(x=x[ids],
                       y=y[ids],
                       nvar=nvar,
@@ -166,7 +166,7 @@ def grow_tree(x, y, nvar, ref, fun, parent_id, min_parent_num, min_child_num, al
                       verbose=verbose,
                       tree=tree)
             if verbose:
-                print(parent_id, right_id, tree.node[right_id]['rule'], tree.node[right_id]['nmols'], tree.node[right_id]['enrichment'])
+                print(parent_id, right_id, tree.nodes[right_id]['rule'], tree.nodes[right_id]['nmols'], tree.nodes[right_id]['enrichment'])
             grow_tree(x=x[np.logical_not(ids)],
                       y=y[np.logical_not(ids)],
                       nvar=nvar,
@@ -185,26 +185,26 @@ def predict_tree(tree, x):
     def __predict(tree, node_id, x, prediction):
         s = list(tree.successors(node_id))
         if s:
-            if tree.node[s[0]]['rule'][1] == '<':
-                case_ids = x.loc[:, tree.node[s[0]]['rule'][0]] < tree.node[s[0]]['rule'][2]
-            elif tree.node[s[0]]['rule'][1] == '>=':
-                case_ids = x.loc[:, tree.node[s[0]]['rule'][0]] >= tree.node[s[0]]['rule'][2]
-            elif tree.node[s[0]]['rule'][1] == '>':
-                case_ids = x.loc[:, tree.node[s[0]]['rule'][0]] > tree.node[s[0]]['rule'][2]
-            elif tree.node[s[0]]['rule'][1] == '<=':
-                case_ids = x.loc[:, tree.node[s[0]]['rule'][0]] <= tree.node[s[0]]['rule'][2]
+            if tree.nodes[s[0]]['rule'][1] == '<':
+                case_ids = x.loc[:, tree.nodes[s[0]]['rule'][0]] < tree.nodes[s[0]]['rule'][2]
+            elif tree.nodes[s[0]]['rule'][1] == '>=':
+                case_ids = x.loc[:, tree.nodes[s[0]]['rule'][0]] >= tree.nodes[s[0]]['rule'][2]
+            elif tree.nodes[s[0]]['rule'][1] == '>':
+                case_ids = x.loc[:, tree.nodes[s[0]]['rule'][0]] > tree.nodes[s[0]]['rule'][2]
+            elif tree.nodes[s[0]]['rule'][1] == '<=':
+                case_ids = x.loc[:, tree.nodes[s[0]]['rule'][0]] <= tree.nodes[s[0]]['rule'][2]
             else:
                 raise ValueError('Value of the inequality sign in the tree rule is not correct')
             __predict(tree, s[0], x.loc[case_ids, :], prediction)
             __predict(tree, s[1], x.loc[~case_ids, :], prediction)
         else:
-            prediction.append(pd.DataFrame([tree.node[node_id]['enrichment']] * x.shape[0],
+            prediction.append(pd.DataFrame([tree.nodes[node_id]['enrichment']] * x.shape[0],
                                            index=x.index))
 
     pred = []
     __predict(tree, -1, x, pred)
     pred = pred[0].append(pred[1:])
-    return pred.loc[x.index, :]
+    return pred.loc[x.index, :]   # TODO: if x.index contains duplicates result would contain more rows then expected
 
 
 def predict_forest(forest, x):
@@ -218,7 +218,7 @@ def predict_forest(forest, x):
 def predict_oob(forest, x):
     pred = []
     for tree in forest:
-        pred.append(predict_tree(tree, x.loc[~x.index.isin(tree.node[-1]['mol_names']), :]))
+        pred.append(predict_tree(tree, x.loc[~x.index.isin(tree.nodes[-1]['mol_names']), :]))
     return pd.concat(pred, axis=1).mean(axis=1)
 
 
