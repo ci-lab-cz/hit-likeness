@@ -143,7 +143,6 @@ def grow_tree(x, y, nvar, ref, fun, parent_id, min_parent_num, min_child_num, al
                           parent=parent_id,
                           score=score,
                           treshold=threshold,
-                          # mol_names=mol_names[ids],
                           nmols=sum(ids),
                           rule=(var_name, '<', threshold),
                           enrichment=e1)
@@ -151,7 +150,6 @@ def grow_tree(x, y, nvar, ref, fun, parent_id, min_parent_num, min_child_num, al
                           parent=parent_id,
                           score=score,
                           treshold=threshold,
-                          # mol_names=mol_names[np.logical_not(ids)],
                           nmols=sum(np.logical_not(ids)),
                           rule=(var_name, '>=', threshold),
                           enrichment=e2)
