@@ -1,12 +1,9 @@
 #!/usr/bin/env python3
-#==============================================================================
 # author          : Pavel Polishchuk
-# date            : 29-06-2019
-# version         : 
-# python_version  : 
-# copyright       : Pavel Polishchuk 2019
-# license         : 
+# license         : BSD-3
 #==============================================================================
+
+__author__ = 'Pavel Polishchuk'
 
 import pickle
 import pandas as pd

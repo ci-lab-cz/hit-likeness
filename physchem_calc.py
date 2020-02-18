@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# author          : Pavel Polishchuk
+# license         : BSD-3
+#==============================================================================
 
 __author__ = 'Pavel Polishchuk'
 
