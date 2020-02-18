@@ -260,7 +260,7 @@ def grow_forest(x, y, ntree, nvar, nsamples, min_parent_num, min_child_num, pool
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(description='Create a decision tree.')
+    parser = argparse.ArgumentParser(description='Create a random forest model.')
     parser.add_argument('-x', metavar='descriptors.txt', required=True,
                         help='text file with descriptors (tab-separated).'
                              'Header is present. The first column contains compound names.')
@@ -268,24 +268,27 @@ if __name__ == '__main__':
                         help='text file with activity values 0/1/NA (tab-separated).'
                              'Header is present. The first column contains compound names.')
     parser.add_argument('-o', '--output', metavar='output.pkl', required=False, default=None,
-                        help='pickled tree object (networkx). If missing the file will be stored with automatically '
+                        help='pickled model (networkx object). If omitted the file will be stored with automatically '
                              'generated name in the dir with the descriptor input file. Default: None.')
-    parser.add_argument('-t', '--ntree', metavar='INTEGER', required=False, default=50,
-                        help='number of trees to build. Default: 50.')
+    parser.add_argument('-t', '--ntree', metavar='INTEGER', required=False, default=200,
+                        help='number of trees to build. Default: 200.')
     parser.add_argument('-m', '--nvar', metavar='INTEGER', required=False, default=3,
                         help='number of randomly chosen variables used to split nodes. '
                              'Values 0 and less indicate to use all variables. Default: 3.')
     parser.add_argument('-s', '--nsamples', metavar='INTEGER', required=False, default=0.67,
-                        help='portion of randomly chosen compounds to train each tree. Should be greater than 0 and '
+                        help='percentage of randomly chosen compounds to train each tree. Should be greater than 0 and '
                              'less or equal to 1. Default: 0.67.')
     parser.add_argument('-p', '--min_parent', metavar='INTEGER', required=False, default=3000,
-                        help='minimum number of items in parent node to split. Default: 3000.')
+                        help='minimum number of items in a parent node to split. Default: 3000.')
     parser.add_argument('-n', '--min_child', metavar='INTEGER', required=False, default=1000,
-                        help='minimum number of items in child node to create. Default: 1000.')
+                        help='minimum number of items in a child node to create. Default: 1000.')
     parser.add_argument('-a', '--algorithm', metavar='INTEGER', required=False, default=2,
-                        help='the number of a splitting algorithm. Default: 2.')
+                        help='the number indicating the cost function optimized during model building. '
+                             '1: minimization of min(H1, H2). 2: maximization of max(H1, H2). 3: maximization of '
+                             'abs(H1 - H2). H is median hit rate enrichment in child nodes. '
+                             'Default: 2.')
     parser.add_argument('-c', '--ncpu', metavar='INTEGER', required=False, default=1,
-                        help='number of CPUs used to built a tree. Default: 1.')
+                        help='number of CPUs used to built a model. Default: 1.')
     parser.add_argument('-v', '--verbose', action='store_true', default=False,
                         help='print progress.')
 
@@ -320,10 +323,6 @@ if __name__ == '__main__':
 
     x = x.reindex(y.index)
 
-    # trees = pickle.load(open('/home/pavel/QSAR/pmapper/nconf/tree/rdkit-desc/49assays_no_pains_fh/forest_test/tree_x_bin_p10000_c10000_alg7.pkl', 'rb'))
-    #
-    # pred = predict_forest(trees, x)
-
     if nvar <= 0:
         nvar = x.shape[1]
 
@@ -349,14 +348,3 @@ if __name__ == '__main__':
                                   min_child_num,
                                   algorithm))
     pickle.dump(forest, open(out_fname, 'wb'))
-
-    # forest = pickle.load(open(
-    #     '/home/pavel/QSAR/pmapper/nconf/tree/rdkit-desc/49assays_no_pains_fh/forest_test/forest_x_bin_t4_v3_p10000_c10000_alg1.pkl',
-    #     'rb'))
-
-    # oob_pred = predict_oob(forest, x)
-    # ref_hit_rate = np.apply_along_axis(hit_rate, 0, y)
-    # for i in range(10, int(max(oob_pred) * 10)):
-    #     ids = oob_pred.index[oob_pred >= i / 10]
-    #     e = enrichment(y.loc[ids, :], ref_hit_rate, np.median)
-    #     print(i / 10, ids.shape[0], ids.shape[0] / y.shape[0], e)
