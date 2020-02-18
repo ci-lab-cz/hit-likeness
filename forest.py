@@ -263,7 +263,10 @@ def grow_forest(x, y, ntree, nvar, nsamples, min_parent_num, min_child_num, pool
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(description='Create a random forest model.')
+    parser = argparse.ArgumentParser(description='Create a random forest model. The obtained model may be large due '
+                                                 'to containing of information about out-of-bag set compounds. '
+                                                 'To strip this information and reduce file size one may use '
+                                                 'clean_forest.py script.')
     parser.add_argument('-x', metavar='descriptors.txt', required=True,
                         help='text file with descriptors (tab-separated).'
                              'Header is present. The first column contains compound names.')
