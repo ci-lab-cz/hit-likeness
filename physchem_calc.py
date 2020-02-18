@@ -61,7 +61,7 @@ def read_smi(fname, sep, start_pos, nlines):
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(description='Calculate some physicochemical parameters with RDKit.')
+    parser = argparse.ArgumentParser(description='Calculation of physicochemical parameters with RDKit.')
     parser.add_argument('-i', '--in', metavar='input.smi', required=True,
                         help='input SMILES file. Should contain mol title as a second field.'
                              'Fields are tab-separated. No header.')
@@ -69,11 +69,11 @@ if __name__ == '__main__':
                         help='output text file with calculated physicochemical properties. '
                              'Molecules causing errors will be reported to stderr.')
     parser.add_argument('-s', '--sep', metavar='CHAR', required=False, default=None,
-                        help='Field separator. Default: whitespaces.')
+                        help='Field separator in input file. Default: whitespaces.')
     parser.add_argument('-p', '--startpos', metavar='NUMBER', required=False, default=0,
                         help='Starting line number to read SMILES. Default: 1 (beginning of the file).')
     parser.add_argument('-l', '--lines', metavar='NUMBER', required=False, default=None,
-                        help='Number of lines (SMILES) to process. Default: None (all lines).')
+                        help='Number of lines (SMILES) to process. Default: None (all lines till the end of the file).')
     parser.add_argument('-c', '--ncpu', metavar='INTEGER', required=False, default=1,
                         help='Number of CPU cores to use. Default: 1.')
     parser.add_argument('-v', '--verbose', action='store_true', default=False,
