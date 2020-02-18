@@ -33,15 +33,18 @@ if __name__ == '__main__':
     parser.add_argument('-p', '--prediction', metavar='predictions.txt', required=False, default=None,
                         help='text file with predicted values. Default: None.')
     parser.add_argument('-o', '--oob', metavar='oob_predictions.txt', required=False, default=None,
-                        help='text file with predicted values. X values for the training set of the model '
-                             'should be supplied to get correct results. Default: None.')
+                        help='text file with predicted values for the out-of-bag set. '
+                             'X values for the training set of the model '
+                             'should be supplied to get correct results. For calculation of OOB statistics a model '
+                             'containing full information should be supplied (not cleaned with clean_forest.py '
+                             'script). Default: None.')
     parser.add_argument('-u', '--cumulative', action='store_true', default=False,
                         help='to make cumulative predictions: the first column is predictions for the first tree, '
                              'the second one - the first two tress, and so on. This option is only needed if one wants '
                              'to track changes in accuracy predictions with increasing number of trees in the model.')
     parser.add_argument('-s', '--sd', action='store_true', default=False,
                         help='set this argument to calculate standard deviation among predictions of individual trees '
-                             'which can be used as a measure of applicability domain. If -u agrument was set the '
+                             'which can be used as a measure of applicability domain. If -u argument was set the '
                              'sd argument will be ignored.')
     parser.add_argument('-c', '--ncpu', metavar='NUMBER', required=False, default=1,
                         help='number of CPU to use. Default: 1.')
