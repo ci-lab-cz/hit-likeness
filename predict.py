@@ -20,7 +20,7 @@ class PredictHTS:
     def __init__(self, model_fname, ncpu, chunk_size=100000):
         self.model = pickle.load(open(model_fname, 'rb'))
         if ncpu > 1:
-            self.pool = Pool(max(0, min(cpu_count(), ncpu)))
+            self.pool = Pool(max(1, min(cpu_count(), ncpu)))
         else:
             self.pool = None
         self.chunk_size = chunk_size
@@ -41,11 +41,9 @@ class PredictHTS:
                 res = calc(smi, name)
                 if res:
                     output.append(res)
-        df = pd.DataFrame.from_records(output)
         df = pd.DataFrame.from_records(output).set_index(0)
         df.columns = descriptor_names
         return df
-        return pd.DataFrame.from_records(output, index='smiles', columns=['smiles'] + descriptor_names)
 
     def __predict(self, x):
         if self.pool is not None:
