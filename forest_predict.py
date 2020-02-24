@@ -9,6 +9,7 @@ import pandas as pd
 import pickle
 import argparse
 import os
+import gzip
 from multiprocessing import Pool, cpu_count
 from forest import predict_tree
 
@@ -73,7 +74,10 @@ if __name__ == '__main__':
 
     pool = Pool(min(ncpu, cpu_count())) if ncpu > 1 else None
 
-    model = pickle.load(open(model_fname, 'rb'))
+    if model_fname.endswith('.gz'):
+        model = pickle.load(gzip.open(model_fname))
+    else:
+        model = pickle.load(open(model_fname, 'rb'))
 
     for x in pd.read_table(x_fname, sep="\t", index_col=0, chunksize=100000):
 
