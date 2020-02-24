@@ -8,6 +8,7 @@ __author__ = 'Pavel Polishchuk'
 import os
 import argparse
 import pickle
+import gzip
 import pandas as pd
 from multiprocessing import Pool, cpu_count
 from physchem_calc import calc_mp, calc, descriptor_names
@@ -17,7 +18,10 @@ from forest_predict import supply_data, predict_tree_mp, predict_tree
 class PredictHTS:
 
     def __init__(self, model_fname, ncpu, chunk_size=100000):
-        self.model = pickle.load(open(model_fname, 'rb'))
+        if model_fname.endswith('.gz'):
+            self.model = pickle.load(gzip.open(model_fname))
+        else:
+            self.model = pickle.load(open(model_fname, 'rb'))
         if ncpu > 1:
             self.pool = Pool(max(1, min(cpu_count(), ncpu)))
         else:
@@ -110,12 +114,15 @@ if __name__ == '__main__':
                         help='file with a pickled (optionally gzipped) model.')
     parser.add_argument('-o', '--output', metavar='predictions.txt', required=True,
                         help='text file with predicted values.')
+    parser.add_argument('-n', '--chunk_size', metavar='NUMBER', required=False, default=100000, type=int,
+                        help='number of simultaneously processing molecules. It will make prediction of large sets '
+                             'more efficient and feasible. Default: 100000.')
     parser.add_argument('-c', '--ncpu', metavar='NUMBER', required=False, default=1, type=int,
                         help='number of CPU to use. Default: 1.')
 
     args = parser.parse_args()
 
-    predict_hts = PredictHTS(model_fname=args.model, ncpu=args.ncpu, chunk_size=20)
+    predict_hts = PredictHTS(model_fname=args.model, ncpu=args.ncpu, chunk_size=args.chunk_size)
 
     if os.path.isfile(args.output):
         os.remove(args.output)
