@@ -1,43 +1,58 @@
-How to use
-
-## generate descriptors
-
-physchem_calc.py -i input.smi -o descriptors.txt -c (number of cores)
-
-imput.smi - SMILES file, no header, tab-separated, second field is mol titles
+How to use:
 
 
-## calc enrichment over descriptor bins:
+Prediction with available models:
 
-# descriptor binning
-binning.py -i descriptors.txt -o descriptors_bin.txt -t bin_thresholds.txt
+- using pre-calculated descriptors
+useful to make prediction by multiple models to avoid repeated calculation of descriptors for a large data set; the supplied model can be gzipped (model.pkl.gz)
 
-bin_thresholds.txt - to setup thresholds to split on bins (maually created)
+physchem_calc.py -i input.smi -o descriptors.txt -c 2
+forest_predict.py -x descriptors.txt -m model.pkl.gz -p predictions.txt -c 2
 
-## gather statistics
-get_bin_enrichment.py -x descriptors_bin.txt -y y.txt -t bin_thresholds.txt -o bins_enrichment.txt
+- using SMILES file
+it will compute descriptors on the fly and make prediction; optimized for very large data sets due to processing of the input file by chunks
 
-y.txt - text files with 0(inactive)/1(active)/NA(not tested) for assays, tab-separated, first column is compound names, header contains names of assays
+predict.py -i input.smi -m model.pkl.gz -o predictions.txt -c 2
 
-
-## To make prediction with existed rules:
-
-tree_predict.py -x descriptors.txt -y y.txt -r rules.txt -o selection_stat.txt
-
-rules.txt - list of rules (manually created)
-
-optionally to retrieve compound ids for each assay add argument -s
+- using custom scripts
+one may import PredictHTS class from predict.py and use it for prediction within custom Python scripts
 
 
-## Build random forest model
+Model building:
 
-forest_mp.py -x descriptors.txt -y y.txt -o model.pkl -t 100 -m 3 -p 3000 -n 1000 -a 2 -c 2
+- generate descriptors
+physchem_calc.py -i input.smi -o descriptors.txt -c 2
 
-the script consumes a lot of memory, the number of cores should be specified carefully. However, even 1 cpu will not guarantee to avoid memory issues.
+- build model
+forest.py -x descriptors.txt -y y.txt -o model.pkl -c 2
 
+y.txt - is a tab-separated text file where the first column contains molecule names, the first row contains name of assays and cell are filled with 0 (inactive) and 1 (active). Missing values can be labeled as NA, but it is not recommended to train model on data sets with a lot of missing data because this will create substantial bias.
+The script consumes a lot of memory depending on the number of compounds and assays, the number of cores should be specified wisely.
 
-## To make prediction with random forest model
+- clean model (optional)
+original model file stores additional information which is not required for making predictions, therefore one may remove this information and get a much smaller file size; script can take multiple models at once and will return stripped models with the added suffix _clean to file names
 
-forest_predict.py -x descriptors_test.txt -y y_test.txt -m model.pkl -p predictions.txt -s stat.txt
+clean_forest.py -i model1.pkl model2.pkl
 
-y argument is optional, it is needed if statistics should be calculated
+- out-of-bag set prediction (robustness of models)
+only works with not stripped models
+
+forest_predict.py -x descriptors_test.txt -m model.pkl -o oob_predictions.txt -c 2
+
+- test set prediction
+see above
+
+- calculation of statistics
+it uses y.txt file with actual values and predictions.txt with predicted hit-likeness; statistics can be calculated for data sets with missing values (where some compounds were not tested in some assays)
+
+this will calculated overall statistics using hit-likeness threshold 1.2
+calc_stat.py -y y.txt -p predictions.txt -s stat.txt -t 1.2
+
+this will calculated statistics per assay using hit-likeness threshold 1.2
+calc_stat.py -y y.txt -p predictions.txt -a assay_stat.txt -t 1.2
+
+- estimate variable importance
+use train set data and a not stripped model, one may specify number of permutation rounds and number of CPUs
+the scripts stores many statistics, you mainly need mean_enrichment_imp and sd_enrichment_imp columns
+
+calc_importance.py -x descriptors.txt -y y.txt -m model.pkl -o importance.txt -r 10 -c 2
