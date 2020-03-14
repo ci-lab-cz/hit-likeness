@@ -4,9 +4,9 @@ This software is for development of models to predict likelihood of compounds to
 
 It includes three models trained on a large PubChem data set consisting of 270k compounds tested in 46 biochemical and cell-based confirmatory assays and common physicochemcial descriptors. These models predict overall hit-likeness as well as biochemical and cell-based ones. The latter two were trained on subsets of assays of the corresponding format.  
 
-The main idea behind is to identify areas of chemical space where hits were found more frequently across multiple assays. Frequent hitters were removed from the training set to avoid a bias. These models were successfully validated on three external test sets (the set of 88k compounds tested in 49 confirmatory PubChem assays, the set of 159k compounds tested in 272 PubChem primary assays and the set of 45k compounds tested in 70 NCI cytotoxicity assays).  
+The main idea behind is to identify regions of chemical space where hits were found more frequently across multiple assays. Frequent hitters were removed from the training set to avoid a bias. The models were built using the RandomForest algorithm with a custom cost function. These models were successfully validated on three external test sets (the set of 88k compounds tested in 49 confirmatory PubChem assays, the set of 159k compounds tested in 272 PubChem primary assays and the set of 45k compounds tested in 70 NCI cytotoxicity assays) and demonstrated their ability to increase hit rates across multiple assays.  
 
-The predicted hit-likeness is within the range from 0 to a large number which indicates average hit rate enrichment of training sets compounds similar by their physicochemical properties to your test set molecules.  
+The predicted hit-likeness is within the range from 0 to a large number which indicates average hit rate enrichment of training sets compounds having similar physicochemical properties to your test set molecules.  
 
 Hit-likeness cen be used to rank compounds for their selection for in vitro testing and will be especially useful for design of diverse libraries to excluded compounds with low likelihood to be hits in in vitro assays.  
 
@@ -37,7 +37,7 @@ predict.py -i input.smi -m model.pkl.gz -o predictions.txt -c 2
 ```
 
 - using custom scripts  
-one may import PredictHTS class from predict.py and use it for prediction within custom Python scripts
+one may import PredictHTS class from predict.py and use it for prediction within own Python scripts
 
 
 ### Model building:
